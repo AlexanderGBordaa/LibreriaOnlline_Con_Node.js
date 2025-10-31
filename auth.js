@@ -13,19 +13,30 @@ function decodeJwt (token) {
 }
 
 function handleCredentialResponse(response) {
-  // Procesa la respuesta JWT enviada por Google y guarda el perfil en sessionStorage
-  const payload = decodeJwt(response.credential);
-  if (!payload) return;
-  const user = { id: payload.sub, name: payload.name, email: payload.email, picture: payload.picture };
-  sessionStorage.setItem('g_user', JSON.stringify(user));
-  // Guardar también el id_token (JWT) para enviarlo al servidor en llamadas protegidas
-  sessionStorage.setItem('g_id_token', response.credential);
-  // Mostrar estado de sesión en el área de botón si existe
-  const gsiButton = document.getElementById('gsi-button');
-  if (gsiButton) {
-    gsiButton.innerHTML = `<div class="signed">Sesión: ${user.name} (<a id='signout-link' href='#'>Cerrar sesión</a>)</div>`;
-    const link = document.getElementById('signout-link');
-    link.addEventListener('click', (e) => { e.preventDefault(); signOut(); });
+  console.log('Google Sign-In response received');
+  try {
+    // Procesa la respuesta JWT enviada por Google y guarda el perfil en sessionStorage
+    const payload = decodeJwt(response.credential);
+    if (!payload) {
+      console.error('Error: No se pudo decodificar el token JWT');
+      return;
+    }
+    console.log('Token JWT decodificado correctamente');
+    const user = { id: payload.sub, name: payload.name, email: payload.email, picture: payload.picture };
+    sessionStorage.setItem('g_user', JSON.stringify(user));
+    // Guardar también el id_token (JWT) para enviarlo al servidor en llamadas protegidas
+    sessionStorage.setItem('g_id_token', response.credential);
+    
+    // Mostrar estado de sesión en el área de botón si existe
+    const gsiButton = document.getElementById('gsi-button');
+    if (gsiButton) {
+      gsiButton.innerHTML = `<div class="signed">Sesión: ${user.name} (<a id='signout-link' href='#'>Cerrar sesión</a>)</div>`;
+      const link = document.getElementById('signout-link');
+      link.addEventListener('click', (e) => { e.preventDefault(); signOut(); });
+    }
+  } catch (error) {
+    console.error('Error en handleCredentialResponse:', error);
+    return;
   }
   // Si estamos en la página de login, redirigir al home automáticamente
   if (location.pathname.endsWith('/login.html') || location.pathname.endsWith('login.html')) {
@@ -58,12 +69,25 @@ if (typeof window !== 'undefined') {
       const tryInit = () => {
         if (window.google && google.accounts && google.accounts.id) {
           try {
-            google.accounts.id.initialize({ client_id: CLIENT_ID, callback: handleCredentialResponse });
-            if (gsiButton) google.accounts.id.renderButton(gsiButton, { theme: 'outline', size: 'large' });
+            google.accounts.id.initialize({
+              client_id: CLIENT_ID,
+              callback: handleCredentialResponse,
+              auto_select: false,
+              cancel_on_tap_outside: true
+            });
+            if (gsiButton) {
+              google.accounts.id.renderButton(gsiButton, {
+                theme: 'filled_blue',
+                size: 'large',
+                type: 'standard',
+                text: 'signin_with'
+              });
+            }
             google.accounts.id.prompt();
             return true;
           } catch (e) {
             console.error('Error inicializando Google Sign-In:', e);
+            if (e.message) console.error('Detalles:', e.message);
             return false;
           }
         }
