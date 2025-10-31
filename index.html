@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librería Cristiana — Home</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="auth.js" defer></script>
+</head>
+<body>
+    <header class="libreria-header">
+        <h1 class="titulo-libreria">Librería Cristiana, Sana Doctrina</h1>
+    </header>
+
+    <main class="home-main">
+        <section class="home-banner">
+            <div class="banner-content">
+                <h2>Bienvenido a la Librería</h2>
+                <p>Recursos bíblicos, reflexiones y predicas para el crecimiento espiritual.</p>
+                <div id="gsi-button" style="margin-top:12px;"></div>
+                <p class="small">Inicia sesión con Google para acceder a los estantes y videos.</p>
+            </div>
+        </section>
+
+        <section class="home-actions">
+            <button class="home-cta" data-href="books.html">Ir a Libros</button>
+            <button class="home-cta" data-href="videos.html">Ir a Videos</button>
+        </section>
+
+        <section class="home-info">
+            <h3>Sobre la librería</h3>
+            <p>Esta pequeña librería digital centraliza publicaciones recomendadas y material audiovisual. Durante el desarrollo, los administradores subirán el contenido.</p>
+        </section>
+    </main>
+
+    <footer class="libreria-footer">
+        <p>&copy; 2025 Librería Cristiana, Sana Doctrina</p>
+    </footer>
+
+    <script>
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('.home-cta');
+                if (!btn) return;
+                // requiere inicio de sesión
+                const user = sessionStorage.getItem('g_user');
+            if (!user) {
+                alert('Debes iniciar sesión con Google para continuar.');
+                return;
+            }
+            location.href = btn.dataset.href;
+        });
+    </script>
+</body>
+</html>

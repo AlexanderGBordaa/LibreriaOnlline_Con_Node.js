@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Libros — Librería Cristiana</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="auth.js" defer></script>
+  <script src="books.js" defer></script>
+</head>
+<body data-protected="true">
+  <header class="libreria-header"><h1 class="titulo-libreria">Libros</h1></header>
+  <main>
+    <section class="libreria-sala">
+      <form id="busqueda-form" style="text-align:center; margin-bottom:18px;">
+        <input type="text" id="busqueda-input" placeholder="Buscar por título o autor..." style="width: 320px; max-width:90%; padding: 8px 14px; border-radius: 8px; border: 1px solid #b88b4a; font-size: 1em;">
+      </form>
+
+      <div class="estante-madera"></div>
+      <div id="aisles-container" class="aisles-container">
+        <button class="aisle-nav left" aria-label="Anterior pasillo">&larr;</button>
+        <div id="aisles" class="aisles" role="list"></div>
+        <button class="aisle-nav right" aria-label="Siguiente pasillo">&rarr;</button>
+      </div>
+      <div class="estante-madera"></div>
+
+      <section id="visor" style="display:none; margin-top:18px;">
+        <button id="volver">&larr; Volver</button>
+        <h3 id="visor-titulo"></h3>
+        <iframe id="visor-pdf" width="100%" height="640" frameborder="0"></iframe>
+      </section>
+    </section>
+  </main>
+  <footer class="libreria-footer"><p>&copy; 2025 Librería Cristiana</p></footer>
+</body>
+</html>

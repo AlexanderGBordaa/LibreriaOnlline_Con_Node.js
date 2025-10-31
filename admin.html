@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — Librería Cristiana</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="auth.js" defer></script>
+  <script src="admin.js" defer></script>
+</head>
+<body data-protected="true">
+  <header class="libreria-header"><h1 class="titulo-libreria">Admin</h1></header>
+  <main style="max-width:900px; margin:24px auto;">
+    <section style="display:flex; gap:18px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:320px; background:#fff; padding:16px; border-radius:8px;">
+        <h3>Agregar libro</h3>
+        <form id="book-form">
+          <input id="book-titulo" placeholder="Título" required style="width:100%; margin-bottom:8px; padding:8px;">
+          <input id="book-autor" placeholder="Autor" required style="width:100%; margin-bottom:8px; padding:8px;">
+          <input id="book-pdf" placeholder="URL PDF" required style="width:100%; margin-bottom:8px; padding:8px;">
+          <button type="submit">Agregar libro</button>
+        </form>
+        <div id="book-msg" style="margin-top:8px;"></div>
+      </div>
+
+      <div style="flex:1; min-width:320px; background:#fff; padding:16px; border-radius:8px;">
+        <h3>Agregar video</h3>
+        <form id="admin-video-form">
+          <input id="admin-video-title" placeholder="Título" required style="width:100%; margin-bottom:8px; padding:8px;">
+          <input id="admin-video-url" placeholder="YouTube URL o ID" required style="width:100%; margin-bottom:8px; padding:8px;">
+          <button type="submit">Agregar video</button>
+        </form>
+        <div id="video-msg" style="margin-top:8px;"></div>
+      </div>
+    </section>
+  </main>
+  <footer class="libreria-footer"><p>&copy; 2025 Librería Cristiana</p></footer>
+</body>
+</html>

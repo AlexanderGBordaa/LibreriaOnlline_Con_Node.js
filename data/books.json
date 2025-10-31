@@ -1,0 +1,39 @@
+[
+  {
+    "titulo": "Los Deleites de Dios",
+    "autor": "John Piper",
+    "pdf": "https://eleuteros.wordpress.com/wp-content/uploads/2018/08/john-piper-los-deleites-de-dios.pdf"
+  },
+  {
+    "titulo": "Conociendo al Dios Vivo",
+    "autor": "Paul Washer",
+    "pdf": "https://recursosespanol.com/wp-content/uploads/sites/8/2021/05/Digital_HeartCry_Conociendo-al-Dios-Vivo_RVR60-1.pdf"
+  },
+  {
+    "titulo": "10 Acusaciones contra la Iglesia Moderna",
+    "autor": "Paul Washer",
+    "pdf": "https://teologiasana.com/wp-content/uploads/2020/11/10-acusaciones-contra-la-iglesia-moderna-Paul-Washer.pdf"
+  },
+  {
+    "titulo": "Dios tiene un Plan Maravilloso para tu Vida",
+    "autor": "Paul Washer",
+    "pdf": "https://teologiasana.com/wp-content/uploads/2020/11/Dios-tiene-un-Plan-Maravilloso-para-tu-vida.-EL-mito-del-Mensaje-moderno.pdf"
+  },
+  {
+    "titulo": "Descubriendo el Glorioso Evangelio (RV60)",
+    "autor": "Paul Washer",
+    "pdf": "https://teologiasana.com/wp-content/uploads/2020/11/descubriendo-el-glorioso-evangelio-rv60-Paul-Washer.pdf"
+  },
+  {
+    "id": 1761928322274,
+    "titulo": "Libro Test",
+    "autor": "Tester",
+    "pdf": "https://example.com/test.pdf"
+  },
+  {
+    "id": 1761936445471,
+    "titulo": "Libro Test Node",
+    "autor": "Node Tester",
+    "pdf": "https://example.com/node-test.pdf"
+  }
+]
