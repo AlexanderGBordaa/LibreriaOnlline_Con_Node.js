@@ -9,7 +9,18 @@
   <script src="videos.js" defer></script>
 </head>
 <body data-protected="true">
-  <header class="libreria-header"><h1 class="titulo-libreria">Videos</h1></header>
+  <header class="libreria-header">
+    <nav class="top-nav">
+      <div class="nav-links">
+        <a href="index.html">&larr; Inicio</a>
+        <a href="books.html">Libros</a>
+        <a href="videos.html"><strong>Videos</strong></a>
+        <a href="admin.html">Admin</a>
+      </div>
+      <div id="auth-status" class="auth-nav-slot"></div>
+    </nav>
+    <h1 class="titulo-libreria">Videos</h1>
+  </header>
   <main>
     <section class="libreria-sala">
       <div id="videos-list" class="videos-list"></div>

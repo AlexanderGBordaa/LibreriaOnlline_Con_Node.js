@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
@@ -46,18 +47,23 @@ const fs = require('fs');
 const videosPath = path.join(__dirname, 'data', 'videos.json');
 
 // Helper: verifica ID token usando google-auth-library (verifica firma y claims)
+const DEFAULT_CLIENT_ID = '947464831495-7m6276ntaetl2nstspoimql15mr7iu3m.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || DEFAULT_CLIENT_ID;
+
 let oauthClient = null;
 function getOAuthClient() {
   if (!oauthClient) {
-    if (!process.env.GOOGLE_CLIENT_ID) throw new Error('GOOGLE_CLIENT_ID no configurado');
-    oauthClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    oauthClient = new OAuth2Client(GOOGLE_CLIENT_ID);
   }
   return oauthClient;
 }
 
 async function verifyIdToken(idToken) {
   const client = getOAuthClient();
-  const ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID });
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: GOOGLE_CLIENT_ID
+  });
   const payload = ticket.getPayload();
   // payload contiene sub, email, aud, exp, iat, name, picture, etc.
   return payload;
@@ -105,6 +111,25 @@ app.post('/api/login', async (req, res) => {
   } catch (err) {
     res.status(401).json({ error: 'Token inválido', detail: err.message });
   }
+});
+
+// Ruta para obtener la sesión actual
+app.get('/api/me', (req, res) => {
+  if (req.session && req.session.user) {
+    return res.json({ authenticated: true, user: req.session.user });
+  }
+  res.json({ authenticated: false });
+});
+
+// Ruta para cerrar sesión en el servidor
+app.post('/api/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error al cerrar sesión' });
+    }
+    res.clearCookie('connect.sid');
+    res.json({ ok: true });
+  });
 });
 
 // Endpoint de desarrollo: permitir crear una sesión de prueba localmente sin verificar tokens.

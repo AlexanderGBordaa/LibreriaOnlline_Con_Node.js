@@ -10,11 +10,14 @@
 </head>
 <body>
   <header class="libreria-header"><h1 class="titulo-libreria">Iniciar sesión</h1></header>
-  <main style="max-width:800px; margin:28px auto; text-align:center;">
-    <p>Inicia sesión con tu cuenta de Google para acceder a los estantes y videos.</p>
-    <div id="gsi-button" style="margin-top:18px;"></div>
-    <div id="error-message" style="color: red; margin-top: 18px; display: none;"></div>
-    <p style="margin-top:18px;">Después de iniciar sesión serás redirigido al inicio.</p>
+  <main style="max-width:500px; margin:40px auto; text-align:center; background:#fff; padding:32px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.12);">
+    <h2 style="color:#7c5c36; margin-top:0;">Bienvenido</h2>
+    <p>Inicia sesión con tu cuenta de Google para acceder a los libros, audios y videos.</p>
+    <div id="gsi-button" style="margin-top:24px; display:flex; justify-content:center;"></div>
+    <div id="error-message" style="color: #e74c3c; margin-top: 18px; display: none;"></div>
+    <div style="margin-top:24px;">
+      <a href="index.html" style="color:#7c5c36; text-decoration:none; font-weight:500;">&larr; Volver a la página principal</a>
+    </div>
     <script>
       window.onerror = function(msg, url, line) {
         const errorDiv = document.getElementById('error-message');

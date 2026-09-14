@@ -9,7 +9,18 @@
   <script src="books.js" defer></script>
 </head>
 <body data-protected="true">
-  <header class="libreria-header"><h1 class="titulo-libreria">Libros</h1></header>
+  <header class="libreria-header">
+    <nav class="top-nav">
+      <div class="nav-links">
+        <a href="index.html">&larr; Inicio</a>
+        <a href="books.html"><strong>Libros</strong></a>
+        <a href="videos.html">Videos</a>
+        <a href="admin.html">Admin</a>
+      </div>
+      <div id="auth-status" class="auth-nav-slot"></div>
+    </nav>
+    <h1 class="titulo-libreria">Libros</h1>
+  </header>
   <main>
     <section class="libreria-sala">
       <form id="busqueda-form" style="text-align:center; margin-bottom:18px;">

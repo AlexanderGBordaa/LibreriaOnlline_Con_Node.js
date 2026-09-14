@@ -1,71 +1,146 @@
-// Helper mínimo de Google Sign-In (cliente)
-// IMPORTANTE: Reemplaza CLIENT_ID con tu OAuth 2.0 Client ID desde Google Cloud Console
+// Helper de autenticación con Google Identity Services (GSI)
+// Client ID de OAuth 2.0 configurado en Google Cloud Console
 const CLIENT_ID = '947464831495-7m6276ntaetl2nstspoimql15mr7iu3m.apps.googleusercontent.com';
 
-function decodeJwt (token) {
+function decodeJwt(token) {
   try {
     const payload = token.split('.')[1];
     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(decodeURIComponent(escape(decoded)));
   } catch (e) {
+    console.error('Error al decodificar JWT:', e);
     return null;
   }
 }
 
-function handleCredentialResponse(response) {
-  console.log('Google Sign-In response received');
+function getUserSession() {
   try {
-    // Procesa la respuesta JWT enviada por Google y guarda el perfil en sessionStorage
+    const raw = sessionStorage.getItem('g_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function handleCredentialResponse(response) {
+  console.log('Google Sign-In: Respuesta de credencial recibida');
+  try {
     const payload = decodeJwt(response.credential);
     if (!payload) {
-      console.error('Error: No se pudo decodificar el token JWT');
+      console.error('Error: No se pudo decodificar el token de Google');
       return;
     }
-    console.log('Token JWT decodificado correctamente');
-    const user = { id: payload.sub, name: payload.name, email: payload.email, picture: payload.picture };
+
+    const user = {
+      id: payload.sub,
+      name: payload.name,
+      email: payload.email,
+      picture: payload.picture
+    };
+
+    // Guardar en sessionStorage para acceso rápido en cliente
     sessionStorage.setItem('g_user', JSON.stringify(user));
-    // Guardar también el id_token (JWT) para enviarlo al servidor en llamadas protegidas
     sessionStorage.setItem('g_id_token', response.credential);
-    
-    // Mostrar estado de sesión en el área de botón si existe
-    const gsiButton = document.getElementById('gsi-button');
-    if (gsiButton) {
-      gsiButton.innerHTML = `<div class="signed">Sesión: ${user.name} (<a id='signout-link' href='#'>Cerrar sesión</a>)</div>`;
-      const link = document.getElementById('signout-link');
-      link.addEventListener('click', (e) => { e.preventDefault(); signOut(); });
+
+    // Sincronizar con el servidor Node para establecer cookie de sesión express-session
+    try {
+      await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_token: response.credential }),
+        credentials: 'same-origin'
+      });
+    } catch (err) {
+      console.warn('Advertencia al sincronizar sesión con backend:', err);
+    }
+
+    renderAuthState();
+
+    // Redirigir si está en login.html
+    const pathname = window.location.pathname;
+    if (pathname.endsWith('/login.html') || pathname.endsWith('login.html')) {
+      window.location.href = 'index.html';
     }
   } catch (error) {
     console.error('Error en handleCredentialResponse:', error);
-    return;
-  }
-  // Si estamos en la página de login, redirigir al home automáticamente
-  if (location.pathname.endsWith('/login.html') || location.pathname.endsWith('login.html')) {
-    location.href = 'index.html';
   }
 }
 
-function signOut() {
-  // Cierra la sesión en el cliente (eliminar datos locales)
+async function signOut() {
+  try {
+    await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+  } catch (e) {
+    // ignorar error de red al salir
+  }
+
   sessionStorage.removeItem('g_user');
   sessionStorage.removeItem('g_id_token');
-  // Intentar limpiar UI de Google si está disponible (no hay signOut directo)
+
   if (window.google && google.accounts && google.accounts.id) {
-    // no hay método signOut en la librería de GSI; solo eliminamos credencial local
+    google.accounts.id.disableAutoSelect();
   }
-  // Recargar para actualizar la interfaz
-  location.reload();
+
+  // Si está en una página protegida, volver a index.html
+  if (document.body.dataset.protected === 'true') {
+    window.location.href = 'index.html';
+  } else {
+    window.location.reload();
+  }
 }
 
-// Inicializar en el cliente: renderizar el botón de Google y comprobar protección de páginas
+function renderAuthState() {
+  const user = getUserSession();
+  const gsiButton = document.getElementById('gsi-button');
+  const authSlots = document.querySelectorAll('.auth-nav-slot, #auth-status');
+
+  if (user) {
+    // Si hay usuario logueado, actualizar el botón principal si existe
+    if (gsiButton) {
+      gsiButton.innerHTML = `
+        <div class="user-badge" style="background: rgba(255,255,255,0.25); color: #fff; padding: 8px 16px; border-radius: 24px; display: inline-flex; align-items: center; gap: 10px;">
+          ${user.picture ? `<img src="${user.picture}" alt="${user.name}" class="user-avatar" style="width:32px; height:32px; border-radius:50%;">` : ''}
+          <span>Conectado como <strong>${user.name || user.email}</strong></span>
+          <button id="signout-btn" class="btn-logout" type="button">Cerrar sesión</button>
+        </div>
+      `;
+      const btn = document.getElementById('signout-btn');
+      if (btn) btn.addEventListener('click', (e) => { e.preventDefault(); signOut(); });
+    }
+
+    // Actualizar barras de navegación o slots en páginas protegidas
+    authSlots.forEach(slot => {
+      slot.innerHTML = `
+        <div class="user-badge">
+          ${user.picture ? `<img src="${user.picture}" alt="${user.name}" class="user-avatar">` : ''}
+          <span>${user.name || user.email}</span>
+          <button class="btn-logout" type="button" onclick="signOut()">Salir</button>
+        </div>
+      `;
+    });
+  } else {
+    // Si no hay usuario en página protegida, redirigir
+    if (document.body.dataset.protected === 'true') {
+      alert('Debes iniciar sesión con tu cuenta de Google para acceder a este contenido.');
+      window.location.href = 'index.html';
+    }
+  }
+}
+
+// Inicializar en el cliente
 if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {
-    // Si CLIENT_ID no está configurado, mostrar un aviso en el área del botón
+    renderAuthState();
+
+    const user = getUserSession();
     const gsiButton = document.getElementById('gsi-button');
-    if (!CLIENT_ID || CLIENT_ID.includes('REPLACE')) {
-      if (gsiButton) gsiButton.innerHTML = `<div style="color:#fff;">Configurar CLIENT_ID en <code>auth.js</code></div>`;
-    } else {
-      // Intentar inicializar Google Identity; el script de Google puede cargarse de forma asíncrona,
-      // por eso probamos varias veces hasta que `google.accounts.id` esté disponible.
+
+    // Solo inicializamos el botón de Google si no hay usuario ya conectado
+    if (!user && gsiButton) {
+      if (!CLIENT_ID || CLIENT_ID.includes('REPLACE')) {
+        gsiButton.innerHTML = `<div style="color:#fff;">Configurar CLIENT_ID en <code>auth.js</code></div>`;
+        return;
+      }
+
       const tryInit = () => {
         if (window.google && google.accounts && google.accounts.id) {
           try {
@@ -75,19 +150,20 @@ if (typeof window !== 'undefined') {
               auto_select: false,
               cancel_on_tap_outside: true
             });
-            if (gsiButton) {
-              google.accounts.id.renderButton(gsiButton, {
-                theme: 'filled_blue',
-                size: 'large',
-                type: 'standard',
-                text: 'signin_with'
-              });
-            }
+
+            google.accounts.id.renderButton(gsiButton, {
+              theme: 'filled_blue',
+              size: 'large',
+              type: 'standard',
+              text: 'signin_with',
+              shape: 'rectangular',
+              logo_alignment: 'left'
+            });
+
             google.accounts.id.prompt();
             return true;
           } catch (e) {
-            console.error('Error inicializando Google Sign-In:', e);
-            if (e.message) console.error('Detalles:', e.message);
+            console.error('Error al inicializar Google Sign-In:', e);
             return false;
           }
         }
@@ -95,25 +171,17 @@ if (typeof window !== 'undefined') {
       };
 
       if (!tryInit()) {
-        if (gsiButton) gsiButton.innerHTML = `<div style="color:#fff;">Cargando Google Sign-In...</div>`;
+        gsiButton.innerHTML = `<div style="color:#fff;">Cargando Google Sign-In...</div>`;
         let attempts = 0;
-        const iv = setInterval(() => {
+        const interval = setInterval(() => {
           attempts++;
           if (tryInit() || attempts > 30) {
-            clearInterval(iv);
-            if (attempts > 30 && gsiButton) gsiButton.innerHTML = `<div style="color:#fff;">No se pudo cargar Google Sign-In</div>`;
+            clearInterval(interval);
+            if (attempts > 30 && !getUserSession()) {
+              gsiButton.innerHTML = `<div style="color:#fff;">No se pudo cargar el botón de Google Sign-In. Comprueba tu conexión.</div>`;
+            }
           }
         }, 200);
-      }
-    }
-
-    // En páginas protegidas, forzar inicio de sesión
-    const protect = document.body.dataset.protected;
-    if (protect === 'true') {
-      const user = sessionStorage.getItem('g_user');
-      if (!user) {
-        // Si no hay sesión, redirigir a la página de inicio (login)
-        location.href = 'index.html';
       }
     }
   });

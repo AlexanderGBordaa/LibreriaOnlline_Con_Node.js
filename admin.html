@@ -10,7 +10,18 @@
   <script src="admin.js" defer></script>
 </head>
 <body data-protected="true">
-  <header class="libreria-header"><h1 class="titulo-libreria">Admin</h1></header>
+  <header class="libreria-header">
+    <nav class="top-nav">
+      <div class="nav-links">
+        <a href="index.html">&larr; Inicio</a>
+        <a href="books.html">Libros</a>
+        <a href="videos.html">Videos</a>
+        <a href="admin.html"><strong>Admin</strong></a>
+      </div>
+      <div id="auth-status" class="auth-nav-slot"></div>
+    </nav>
+    <h1 class="titulo-libreria">Admin</h1>
+  </header>
   <main style="max-width:900px; margin:24px auto;">
     <section style="display:flex; gap:18px; flex-wrap:wrap;">
       <div style="flex:1; min-width:320px; background:#fff; padding:16px; border-radius:8px;">

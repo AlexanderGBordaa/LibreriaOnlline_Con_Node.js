@@ -1,144 +1,120 @@
-# Librería Cristiana — Desarrollo local
+# Librería Cristiana — Plataforma Web con Node.js
 
-Este repositorio es una pequeña aplicación estática servida con Node/Express pensada para desarrollo local. Incluye una UI para navegar libros, ver PDFs y una sección de videos. También contiene un pequeño admin protegido con Google Sign-In para agregar libros y videos durante el desarrollo.
+Plataforma web para lectura de libros cristianos, visualización de videos y panel de administración, construida con HTML, CSS, JavaScript y un backend ligero en Node.js/Express con autenticación mediante **Google Sign-In (OAuth 2.0)**.
 
-Requisitos
-- Node.js 18+ (o superior)
+---
+
+## 🔑 Configurar Google Sign-In para CUALQUIER Cuenta de Google
+
+Por defecto, los proyectos creados en Google Cloud Console inician en estado **"En pruebas" (Testing)**. En este estado, Google **bloquea a cualquier usuario** que no esté registrado manualmente como "Usuario de prueba" (generando error `403: access_denied`).
+
+Para permitir que **cualquier persona con una cuenta de Google** pueda ingresar:
+
+### 1. Publicar la aplicación en Google Cloud Console
+1. Ingresa a [Google Cloud Console](https://console.cloud.google.com/).
+2. Selecciona tu proyecto en la barra superior (el correspondiente al Client ID `947464831495-7m6276ntaetl2nstspoimql15mr7iu3m...`).
+3. En el menú de la izquierda, navega a **APIs y servicios** > **Pantalla de consentimiento de OAuth** (*OAuth consent screen*).
+4. Asegúrate de que el **Tipo de usuario** (*User type*) esté seleccionado como **Externo** (*External*).
+5. En la sección **Estado de publicación** (*Publishing status*), haz clic en el botón **"PUBLICAR LA APLICACIÓN"** (*Publish app*) y confirma la acción en la ventana emergente.
+   > **Nota importante**: Dado que esta aplicación solo solicita permisos básicos (`openid`, `email`, `profile`), Google **no requiere revisión ni verificación empresarial**. El pase a producción es **inmediato** y cualquier cuenta de Google del mundo podrá iniciar sesión.
+
+### 2. Verificar los Orígenes de JavaScript Autorizados
+1. En el menú de la izquierda, ve a **APIs y servicios** > **Credenciales**.
+2. Haz clic sobre tu **ID de cliente OAuth 2.0** (*Web client*).
+3. En la sección **Orígenes autorizados de JavaScript**, asegúrate de tener agregados:
+   - `http://localhost:3000`
+   - `http://127.0.0.1:3000`
+   - *(Si despliegas la web en internet, agrega aquí el dominio de producción, ej. `https://tu-dominio.com`)*.
+4. En **URIs de redireccionamiento autorizados**, si están configurados, asegúrate de tener `http://localhost:3000` y `http://127.0.0.1:3000`.
+5. Haz clic en **Guardar**.
+
+---
+
+## 🚀 Requisitos e Instalación
+
+### Requisitos
+- [Node.js](https://nodejs.org/) v18 o superior
 - NPM
 
-Variables importantes
-- `GOOGLE_CLIENT_ID` — Client ID de OAuth 2.0 (Google Cloud Console). Necesario para validar tokens en el servidor.
-- `SESSION_SECRET` — Secreto para firmar sesiones. En producción debe ser una frase larga aleatoria.
+### Instalación
+Clona el repositorio e instala las dependencias:
 
-Instalación
-
-```powershell
-cd "c:\Users\alebo\OneDrive\Escritorio\Libreria Cristiana"
+```bash
+git clone https://github.com/AlexanderGBordaa/LibreriaOnlline_Con_Node.js.git
+cd LibreriaOnlline_Con_Node.js
 npm install
 ```
 
-Ejecución (desarrollo)
+---
 
-Configura las variables de entorno en PowerShell (temporal para la sesión actual):
+## ⚙️ Variables de Entorno
 
-```powershell
-$env:GOOGLE_CLIENT_ID = 'TU_GOOGLE_CLIENT_ID.apps.googleusercontent.com'
-$env:SESSION_SECRET = 'una_frase_larga_y_segura'
-npm run dev
-```
-
-La app quedará disponible en: http://localhost:3000
-
-Páginas útiles
-- `/` — Home
-- `/login.html` — Página con el botón de Google Sign-In (cliente)
-- `/books.html` — Interfaz principal de libros
-- `/videos.html` — Interfaz de videos
-- `/admin.html` — UI de administración (agregar libros/videos) — requiere sesión
-
-Flujo de autenticación (cliente + servidor)
-
-1. Cliente: `auth.js` inicializa Google Identity Services con tu `CLIENT_ID` y, tras hacer sign-in, guarda `g_id_token` y `g_user` en `sessionStorage`.
-2. Admin: `admin.js` envía `POST /api/login` con `{ id_token }`. El servidor valida el token con `google-auth-library` y crea `req.session.user` (cookie de sesión con `express-session`).
-3. A partir de ahí las llamadas protegidas (ej. `POST /api/books`) usan la cookie de sesión (same-origin). El cliente debe enviar `credentials: 'same-origin'` si hace fetch directamente.
-
-Pruebas rápidas (desarrollo)
-
-1) Probar login con Google (recomendado):
+Copia el archivo de ejemplo `.env.example` a `.env`:
 
 ```powershell
-# Asume que has puesto tu CLIENT_ID en auth.js y exportado GOOGLE_CLIENT_ID
-Start-Process "http://localhost:3000/login.html"
+cp .env.example .env
 ```
 
-Haz sign-in con Google en la página que se abre. Tras un login exitoso verás `g_id_token` y `g_user` en `sessionStorage` (DevTools → Application).
+El archivo `.env` contendrá:
 
-2) Probar admin con sesión (servidor validando el token):
-
-- Abre `http://localhost:3000/admin.html` (después del sign-in). Al enviar formularios, `admin.js` hará `POST /api/login` internamente y luego `POST /api/books`/`/api/videos` usando la cookie de sesión.
-
-3) Prueba rápida sin Google (solo desarrollo):
-
-Si quieres probar sin usar Google, hay un endpoint de desarrollo que crea una sesión sin validar tokens (`/__dev/login`). Úsalo solo en local:
-
-```powershell
-# Crear una sesión de desarrollo y mantener la cookie en $session
-$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-Invoke-RestMethod -Uri http://127.0.0.1:3000/__dev/login -Method Post -Body (@{ sub='dev'; email='dev@local'; name='Dev' } | ConvertTo-Json) -ContentType 'application/json' -WebSession $session
-
-# Crear un libro usando la sesión guardada en $session
-Invoke-RestMethod -Uri http://127.0.0.1:3000/api/books -Method Post -Body (@{ titulo='Libro Test'; autor='Tester'; pdf='https://example.com/test.pdf' } | ConvertTo-Json) -ContentType 'application/json' -WebSession $session
-
-# Listar libros
-Invoke-RestMethod http://127.0.0.1:3000/api/books -UseBasicParsing
+```env
+PORT=3000
+GOOGLE_CLIENT_ID=947464831495-7m6276ntaetl2nstspoimql15mr7iu3m.apps.googleusercontent.com
+SESSION_SECRET=dev-session-secret-change-production
 ```
 
-Archivo de datos
-- `data/books.json` — lista canónica de libros (el servidor lee y escribe en este archivo para persistencia simple en desarrollo).
+> **Nota**: El servidor ya incluye el `GOOGLE_CLIENT_ID` por defecto como respaldo en `server.js`, por lo que funcionará de inmediato incluso si no configuras el archivo `.env` manualmente.
 
-Limpieza / notas de seguridad
-- El endpoint `/__dev/login` es solo para desarrollo. No lo dejes habilitado en producción.
-- En producción recomienda:
-	- Usar `cookie.secure = true` y HTTPS
-	- Usar un store de sesiones persistente (Redis, DB)
-	- Proteger y auditar las credenciales y secretos
+---
 
-Test automatizado incluido
-- `test/session-test.js` — script Node que crea una sesión dev, agrega un libro y lista libros (útil para CI o pruebas locales).
+## 💻 Ejecución
 
-¿Quieres que quite el endpoint dev después de tus pruebas o que lo deje para desarrollo continuo? 
-
-Librería Cristiana
-
-Development notes
-
-Install dependencies:
-
-```powershell
-npm install
-```
-
-Start dev server (nodemon):
-
+### Modo desarrollo (con recarga automática mediante nodemon):
 ```powershell
 npm run dev
 ```
 
-Start production server:
-
+### Modo producción:
 ```powershell
 npm start
 ```
 
-Visit http://localhost:3000 to open the library. The client fetches `/api/books` to populate the catalog from `data/books.json`.
+La aplicación estará accesible en:
+👉 **http://localhost:3000** o **http://127.0.0.1:3000**
 
-Notes:
-- PDFs are embedded in an iframe. Some hosts block embedding — test the PDF URLs separately if they don't load.
-- To add/remove books, edit `data/books.json` and refresh the page.
- 
-Additional pages:
-- `index.html` — Home (sign-in button + navigation)
-- `books.html` — Books interface (aisles, search, viewer). Protected by Google sign-in.
-- `videos.html` — Videos interface (view-only). Protected by Google sign-in.
+---
 
-Google Sign-In:
-- Open `auth.js` and replace `<REPLACE_WITH_GOOGLE_CLIENT_ID>` with your OAuth 2.0 Client ID.
-- The Home page shows the Google Sign-In button. Books and Videos pages redirect to Home if not signed in.
+## 🧭 Estructura y Navegación
 
-Server-side verification & Admin
-- To enable server-side verification of Google ID tokens set the environment variable `GOOGLE_CLIENT_ID` to the same client ID used in `auth.js` when running the server.
-- Protected endpoints that create content (POST `/api/books`, POST `/api/videos`) require a valid ID token sent in the Authorization header as `Bearer <id_token>`.
-- Admin UI: `admin.html` + `admin.js` let you add books and videos from the browser; they call the protected endpoints and send the ID token from sessionStorage.
+- `/` o `/index.html` — Página principal con bienvenida y botón de inicio de sesión con Google.
+- `/login.html` — Página dedicada para inicio de sesión.
+- `/books.html` — Estantería virtual de libros con búsqueda, pasillos y visor interactivo de PDFs (protegida por autenticación).
+- `/videos.html` — Sección de conferencias y predicas en video (protegida por autenticación).
+- `/admin.html` — Panel de administración para agregar nuevos libros y videos (protegido).
+- `/data/books.json` — Almacenamiento local de libros.
+- `/data/videos.json` — Almacenamiento local de videos.
 
-Example (PowerShell) to run with env var:
+---
+
+## 🔒 Flujo de Autenticación y Seguridad
+
+1. **Cliente (`auth.js`)**:
+   - Inicializa el SDK de Google Identity Services.
+   - Procesa la respuesta JWT del usuario y guarda la sesión en el navegador (`sessionStorage`).
+   - Sincroniza automáticamente la sesión con el backend (`POST /api/login`) para crear una cookie de sesión HTTP (`express-session`).
+   - Muestra el nombre, avatar y botón de "Cerrar sesión" en la barra de navegación.
+
+2. **Servidor (`server.js`)**:
+   - Middleware `requireAuth`: verifica tanto la cookie de sesión como tokens JWT válidos mediante `google-auth-library`.
+   - Endpoints `/api/me` y `/api/logout` para consulta y cierre de sesión seguro.
+   - Endpoints protegidos para la creación de libros y videos.
+
+---
+
+## 🧪 Pruebas Automatizadas
+
+Para validar el sistema de sesiones y creación de recursos sin necesidad de abrir el navegador:
+
 ```powershell
-setx GOOGLE_CLIENT_ID "your-client-id.apps.googleusercontent.com"
-npm run dev
+node test/session-test.js
 ```
-
-Security note: The server verifies tokens using Google's tokeninfo endpoint. This is suitable for development; for production consider using Google's official libraries and/or caching verification results.
-
-Video management:
-- Video creation is intentionally removed from the public UI. To add videos during development, edit `data/videos.json` or POST to `/api/videos` while the server is running.
-
-If you want a server-side verified login flow (recommended for production), we can add proper OAuth token verification on the server.
