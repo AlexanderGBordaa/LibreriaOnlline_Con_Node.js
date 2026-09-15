@@ -23,6 +23,31 @@ app.use(session({
 // Servir archivos estáticos desde la raíz del proyecto
 app.use(express.static(path.join(__dirname)));
 
+// Rutas explícitas para servir páginas principales
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get(['/index', '/index.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get(['/login', '/login.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get(['/books', '/books.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'books.html'));
+});
+
+app.get(['/videos', '/videos.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'videos.html'));
+});
+
+app.get(['/admin', '/admin.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // API simple para devolver la lista de libros
 app.get('/api/books', (req, res) => {
   try {
@@ -176,6 +201,14 @@ app.post('/api/books', requireAuth, (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'No se pudo guardar el libro' });
   }
+});
+
+// Redirección para cualquier ruta desconocida (evita "Cannot GET /...")
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Endpoint no encontrado' });
+  }
+  res.redirect('/');
 });
 
 // Escuchar en 0.0.0.0 para aceptar conexiones IPv4 e IPv6 en desarrollo
