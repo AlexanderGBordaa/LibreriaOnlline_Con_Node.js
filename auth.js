@@ -127,62 +127,82 @@ function renderAuthState() {
 }
 
 // Inicializar en el cliente
-if (typeof window !== 'undefined') {
-  window.addEventListener('DOMContentLoaded', () => {
-    renderAuthState();
+function initAuth() {
+  // Si el usuario abrió el archivo con doble clic (protocolo file://)
+  if (window.location.protocol === 'file:') {
+    const fileWarning = document.createElement('div');
+    fileWarning.style.cssText = 'background: #fff3cd; color: #856404; padding: 16px; margin: 16px auto; max-width: 800px; border-radius: 8px; border: 2px solid #ffeeba; text-align: center; font-family: sans-serif; font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 9999; position: relative;';
+    fileWarning.innerHTML = `
+      <strong>⚠️ Atención: Estás abriendo este archivo directamente desde tu disco (file://)</strong><br>
+      Google Sign-In bloquea el inicio de sesión desde archivos locales. Para que funcione correctamente:<br>
+      1. Abre tu terminal en esta carpeta y ejecuta: <code>npm run dev</code> o <code>npm start</code><br>
+      2. Abre tu navegador en: <a href="http://localhost:3000" style="color:#0056b3; font-weight:bold;">http://localhost:3000</a>
+    `;
+    document.body.prepend(fileWarning);
+  }
 
-    const user = getUserSession();
-    const gsiButton = document.getElementById('gsi-button');
+  renderAuthState();
 
-    // Solo inicializamos el botón de Google si no hay usuario ya conectado
-    if (!user && gsiButton) {
-      if (!CLIENT_ID || CLIENT_ID.includes('REPLACE')) {
-        gsiButton.innerHTML = `<div style="color:#fff;">Configurar CLIENT_ID en <code>auth.js</code></div>`;
-        return;
+  const user = getUserSession();
+  const gsiButton = document.getElementById('gsi-button');
+
+  // Solo inicializamos el botón de Google si no hay usuario ya conectado
+  if (!user && gsiButton) {
+    if (!CLIENT_ID || CLIENT_ID.includes('REPLACE')) {
+      gsiButton.innerHTML = `<div style="color:#fff;">Configurar CLIENT_ID en <code>auth.js</code></div>`;
+      return;
+    }
+
+    const tryInit = () => {
+      if (window.google && google.accounts && google.accounts.id) {
+        try {
+          google.accounts.id.initialize({
+            client_id: CLIENT_ID,
+            callback: handleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+
+          google.accounts.id.renderButton(gsiButton, {
+            theme: 'filled_blue',
+            size: 'large',
+            type: 'standard',
+            text: 'signin_with',
+            shape: 'rectangular',
+            logo_alignment: 'left'
+          });
+
+          google.accounts.id.prompt();
+          return true;
+        } catch (e) {
+          console.error('Error al inicializar Google Sign-In:', e);
+          return false;
+        }
       }
+      return false;
+    };
 
-      const tryInit = () => {
-        if (window.google && google.accounts && google.accounts.id) {
-          try {
-            google.accounts.id.initialize({
-              client_id: CLIENT_ID,
-              callback: handleCredentialResponse,
-              auto_select: false,
-              cancel_on_tap_outside: true
-            });
-
-            google.accounts.id.renderButton(gsiButton, {
-              theme: 'filled_blue',
-              size: 'large',
-              type: 'standard',
-              text: 'signin_with',
-              shape: 'rectangular',
-              logo_alignment: 'left'
-            });
-
-            google.accounts.id.prompt();
-            return true;
-          } catch (e) {
-            console.error('Error al inicializar Google Sign-In:', e);
-            return false;
+    if (!tryInit()) {
+      gsiButton.innerHTML = `<div style="color:#fff;">Cargando Google Sign-In...</div>`;
+      let attempts = 0;
+      const interval = setInterval(() => {
+        attempts++;
+        if (tryInit() || attempts > 30) {
+          clearInterval(interval);
+          if (attempts > 30 && !getUserSession()) {
+            gsiButton.innerHTML = `<div style="color:#fff;">No se pudo cargar el botón de Google Sign-In. Comprueba tu conexión o abre en http://localhost:3000</div>`;
           }
         }
-        return false;
-      };
-
-      if (!tryInit()) {
-        gsiButton.innerHTML = `<div style="color:#fff;">Cargando Google Sign-In...</div>`;
-        let attempts = 0;
-        const interval = setInterval(() => {
-          attempts++;
-          if (tryInit() || attempts > 30) {
-            clearInterval(interval);
-            if (attempts > 30 && !getUserSession()) {
-              gsiButton.innerHTML = `<div style="color:#fff;">No se pudo cargar el botón de Google Sign-In. Comprueba tu conexión.</div>`;
-            }
-          }
-        }, 200);
-      }
+      }, 200);
     }
-  });
+  }
 }
+
+if (typeof window !== 'undefined') {
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', initAuth);
+  } else {
+    initAuth();
+  }
+}
+

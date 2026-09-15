@@ -23,6 +23,27 @@ app.use(session({
 // Servir archivos estáticos desde la raíz del proyecto
 app.use(express.static(path.join(__dirname)));
 
+// Servir recursos estáticos clave explícitamente con su tipo MIME
+app.get('/style.css', (req, res) => {
+  res.type('text/css').sendFile(path.join(__dirname, 'style.css'));
+});
+
+app.get('/auth.js', (req, res) => {
+  res.type('application/javascript').sendFile(path.join(__dirname, 'auth.js'));
+});
+
+app.get('/books.js', (req, res) => {
+  res.type('application/javascript').sendFile(path.join(__dirname, 'books.js'));
+});
+
+app.get('/videos.js', (req, res) => {
+  res.type('application/javascript').sendFile(path.join(__dirname, 'videos.js'));
+});
+
+app.get('/admin.js', (req, res) => {
+  res.type('application/javascript').sendFile(path.join(__dirname, 'admin.js'));
+});
+
 // Rutas explícitas para servir páginas principales
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
